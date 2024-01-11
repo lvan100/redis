@@ -21,8 +21,8 @@ type myStringCmd struct {
 	next redis.StringCmd
 }
 
-func (c *myStringCmd) Set(ctx context.Context, key string, value any, opts ...redis.CmdOption) (string, error) {
-	return c.next.Set(ctx, key, value, opts...)
+func (c *myStringCmd) Set(ctx context.Context, key string, value any) *redis.StringCmdSet {
+	return c.next.Set(ctx, key, value)
 }
 
 var client *redis.Client
@@ -43,7 +43,7 @@ func init() {
 
 func TestStringCmd_Set(t *testing.T) {
 	ctx := context.Background()
-	r, err := client.StringCmd().Set(ctx, "a", "b", redis.Ex(5), redis.KeepTTL())
+	r, err := client.StringCmd().Set(ctx, "a", "b").Ex(5).Send()
 	if err != nil {
 		panic(err)
 	}

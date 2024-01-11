@@ -1,25 +1,5 @@
 package redis
 
-import (
-	"bytes"
-	"sync"
-)
-
-var bytesPool sync.Pool
-
-func getBytes() *bytes.Buffer {
-	if v := bytesPool.Get(); v != nil {
-		buf := v.(*bytes.Buffer)
-		buf.Reset()
-		return buf
-	}
-	return bytes.NewBuffer(nil)
-}
-
-func putBytes(v *bytes.Buffer) {
-	bytesPool.Put(v)
-}
-
 type Client struct {
 	driver    Driver
 	stringCmd StringCmd
