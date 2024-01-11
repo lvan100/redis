@@ -2,19 +2,28 @@ package redis
 
 import (
 	"context"
-	"fmt"
 	"unsafe"
 )
 
 type Cmdable interface {
-	Cmd() (ctx context.Context, cmd string, args []any)
+	Driver() Driver
+	CmdArgs() (ctx context.Context, cmd string, args []any)
 }
 
-type StringReplier[T Cmdable] struct{}
+type Replier[T Cmdable] struct{}
+
+func (r *Replier[T]) Send() (any, error) {
+	t := *(*T)(unsafe.Pointer(&r))
+	ctx, cmd, args := t.CmdArgs()
+	return t.Driver().Exec(ctx, cmd, args)
+}
+
+type StringReplier[T Cmdable] struct{ Replier[T] }
 
 func (r *StringReplier[T]) Send() (string, error) {
-	t := *(*T)(unsafe.Pointer(&r))
-	ctx, cmd, args := t.Cmd()
-	fmt.Println(ctx, cmd, args)
-	return "OK", nil
+	result, err := r.Replier.Send()
+	if err != nil {
+		return "", err
+	}
+	return result.(string), nil
 }

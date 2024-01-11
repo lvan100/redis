@@ -1,7 +1,6 @@
 package redis_test
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"testing"
@@ -9,11 +8,10 @@ import (
 	"github.com/lvan100/redis"
 )
 
-type mockDriver struct {
-}
+type mockDriver struct{}
 
-func (d *mockDriver) Exec(ctx context.Context, buf *bytes.Buffer) (any, error) {
-	fmt.Println(buf.String())
+func (d *mockDriver) Exec(ctx context.Context, cmd string, args []any) (any, error) {
+	fmt.Println(ctx, cmd, args)
 	return "OK", nil
 }
 
