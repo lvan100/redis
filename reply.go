@@ -1,43 +1,33 @@
 package redis
 
 import (
-	"context"
 	"fmt"
 	"strconv"
-	"unsafe"
 )
 
-type cmdable interface {
-	driver() Driver
-	cmdArgs() (ctx context.Context, cmd string, args []any)
+type replier struct{ command }
+
+func (r *replier) result() (any, error) {
+	return r.driver.Exec(r.ctx, r.cmd, r.args)
 }
 
-type replier[T cmdable] struct{}
+type CmdIntReplier struct{ replier }
 
-func (r *replier[T]) result() (any, error) {
-	t := *(*T)(unsafe.Pointer(&r))
-	return t.driver().Exec(t.cmdArgs())
+func NewCmdIntReplier(c command) *CmdIntReplier {
+	return &CmdIntReplier{replier{c}}
 }
 
-type CmdIntReplier struct {
-	intReplier[*CmdIntReplier]
-	command
-}
-
-type intReplier[T cmdable] struct{ replier[T] }
-
-func (r *intReplier[T]) Result() (int64, error) {
+func (r *CmdIntReplier) Result() (int64, error) {
 	return toInt64(r.result())
 }
 
-type CmdStringReplier struct {
-	stringReplier[*CmdStringReplier]
-	command
+type CmdStringReplier struct{ replier }
+
+func NewCmdStringReplier(c command) *CmdStringReplier {
+	return &CmdStringReplier{replier{c}}
 }
 
-type stringReplier[T cmdable] struct{ replier[T] }
-
-func (r *stringReplier[T]) Result() (string, error) {
+func (r *CmdStringReplier) Result() (string, error) {
 	return toString(r.result())
 }
 

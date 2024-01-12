@@ -127,20 +127,12 @@ func (o *optGet[T]) Get() T {
 }
 
 type command struct {
-	d    Driver
-	ctx  context.Context
-	cmd  string
-	args []any
-}
-
-func (impl *command) driver() Driver {
-	return impl.d
+	driver Driver
+	ctx    context.Context
+	cmd    string
+	args   []any
 }
 
 func (impl *command) option(v ...any) {
 	impl.args = append(impl.args, v...)
-}
-
-func (impl *command) cmdArgs() (ctx context.Context, cmd string, args []any) {
-	return impl.ctx, impl.cmd, impl.args
 }

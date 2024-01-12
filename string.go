@@ -138,12 +138,12 @@ type stringOps struct {
 }
 
 func (c *stringOps) Append(ctx context.Context, key, value string) *CmdIntReplier {
-	return &CmdIntReplier{command: command{
-		d:    c.driver,
-		ctx:  ctx,
-		cmd:  "APPEND",
-		args: []any{key, value},
-	}}
+	return NewCmdIntReplier(command{
+		driver: c.driver,
+		ctx:    ctx,
+		cmd:    "APPEND",
+		args:   []any{key, value},
+	})
 }
 
 func (c *stringOps) Decr(ctx context.Context, key string) (int64, error) {
@@ -165,11 +165,13 @@ func (c *stringOps) GetDel(ctx context.Context, key string) (string, error) {
 func (c *stringOps) GetEx(ctx context.Context, key string) *CmdGet {
 	return &CmdGet{
 		CmdStringReplier: CmdStringReplier{
-			command: command{
-				d:    c.driver,
-				ctx:  ctx,
-				cmd:  "GETEX",
-				args: []any{key},
+			replier: replier{
+				command: command{
+					driver: c.driver,
+					ctx:    ctx,
+					cmd:    "GETEX",
+					args:   []any{key},
+				},
 			},
 		},
 	}
@@ -218,11 +220,13 @@ func (c *stringOps) PSetEX(ctx context.Context, key string, value any, expire in
 func (c *stringOps) Set(ctx context.Context, key string, value any) *CmdSet {
 	return &CmdSet{
 		CmdStringReplier: CmdStringReplier{
-			command: command{
-				d:    c.driver,
-				ctx:  ctx,
-				cmd:  "SET",
-				args: []any{key, value},
+			replier: replier{
+				command: command{
+					driver: c.driver,
+					ctx:    ctx,
+					cmd:    "SET",
+					args:   []any{key, value},
+				},
 			},
 		},
 	}
