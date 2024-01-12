@@ -7,27 +7,38 @@ import (
 	"unsafe"
 )
 
-type Cmdable interface {
-	Driver() Driver
-	CmdArgs() (ctx context.Context, cmd string, args []any)
+type cmdable interface {
+	driver() Driver
+	cmdArgs() (ctx context.Context, cmd string, args []any)
 }
 
-type Replier[T Cmdable] struct{}
+type replier[T cmdable] struct{}
 
-func (r *Replier[T]) Send() (any, error) {
+func (r *replier[T]) result() (any, error) {
 	t := *(*T)(unsafe.Pointer(&r))
-	ctx, cmd, args := t.CmdArgs()
-	return t.Driver().Exec(ctx, cmd, args)
+	return t.driver().Exec(t.cmdArgs())
 }
 
-type StringReplier[T Cmdable] struct{ Replier[T] }
+type CmdIntReplier struct {
+	intReplier[*CmdIntReplier]
+	command
+}
 
-func (r *StringReplier[T]) Send() (string, error) {
-	result, err := r.Replier.Send()
-	if err != nil {
-		return "", err
-	}
-	return result.(string), nil
+type intReplier[T cmdable] struct{ replier[T] }
+
+func (r *intReplier[T]) Result() (int64, error) {
+	return toInt64(r.result())
+}
+
+type CmdStringReplier struct {
+	stringReplier[*CmdStringReplier]
+	command
+}
+
+type stringReplier[T cmdable] struct{ replier[T] }
+
+func (r *stringReplier[T]) Result() (string, error) {
+	return toString(r.result())
 }
 
 type Result struct {
@@ -39,8 +50,8 @@ func NewResult(data ...string) *Result {
 	return &Result{Data: data}
 }
 
-// Int executes a command whose reply is a `int64`.
-func Int(v any, err error) (int64, error) {
+// toInt64 executes a command whose reply is a `int64`.
+func toInt64(v any, err error) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
@@ -57,14 +68,14 @@ func Int(v any, err error) (int64, error) {
 		if len(r.Data) == 0 {
 			return 0, fmt.Errorf("redis: no data")
 		}
-		return Int(r.Data[0], nil)
+		return toInt64(r.Data[0], nil)
 	default:
 		return 0, fmt.Errorf("redis: unexpected type (%T) for int64", v)
 	}
 }
 
-// Float executes a command whose reply is a `float64`.
-func Float(v any, err error) (float64, error) {
+// toFloat64 executes a command whose reply is a `float64`.
+func toFloat64(v any, err error) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
@@ -81,14 +92,14 @@ func Float(v any, err error) (float64, error) {
 		if len(r.Data) == 0 {
 			return 0, fmt.Errorf("redis: no data")
 		}
-		return Float(r.Data[0], nil)
+		return toFloat64(r.Data[0], nil)
 	default:
 		return 0, fmt.Errorf("redis: unexpected type (%T) for float64", r)
 	}
 }
 
-// String executes a command whose reply is a `string`.
-func String(v any, err error) (string, error) {
+// toString executes a command whose reply is a `string`.
+func toString(v any, err error) (string, error) {
 	if err != nil {
 		return "", err
 	}
@@ -107,8 +118,8 @@ func String(v any, err error) (string, error) {
 	}
 }
 
-// Slice executes a command whose reply is a `[]any`.
-func Slice(v any, err error) ([]any, error) {
+// toSlice executes a command whose reply is a `[]any`.
+func toSlice(v any, err error) ([]any, error) {
 	if err != nil {
 		return nil, err
 	}
@@ -131,15 +142,15 @@ func Slice(v any, err error) ([]any, error) {
 		}
 		return slice, nil
 	case *Result:
-		return Slice(r.Data, nil)
+		return toSlice(r.Data, nil)
 	default:
 		return nil, fmt.Errorf("redis: unexpected type (%T) for []any", v)
 	}
 }
 
-// IntSlice executes a command whose reply is a `[]int64`.
-func IntSlice(v any, err error) ([]int64, error) {
-	slice, err := Slice(v, err)
+// toInt64Slice executes a command whose reply is a `[]int64`.
+func toInt64Slice(v any, err error) ([]int64, error) {
+	slice, err := toSlice(v, err)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +160,7 @@ func IntSlice(v any, err error) ([]int64, error) {
 	val := make([]int64, len(slice))
 	for i, r := range slice {
 		var n int64
-		n, err = Int(r, nil)
+		n, err = toInt64(r, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -158,9 +169,9 @@ func IntSlice(v any, err error) ([]int64, error) {
 	return val, nil
 }
 
-// FloatSlice executes a command whose reply is a `[]float64`.
-func FloatSlice(v any, err error) ([]float64, error) {
-	slice, err := Slice(v, err)
+// toFloat64Slice executes a command whose reply is a `[]float64`.
+func toFloat64Slice(v any, err error) ([]float64, error) {
+	slice, err := toSlice(v, err)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +181,7 @@ func FloatSlice(v any, err error) ([]float64, error) {
 	val := make([]float64, len(slice))
 	for i, r := range slice {
 		var f float64
-		f, err = Float(r, nil)
+		f, err = toFloat64(r, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -179,9 +190,9 @@ func FloatSlice(v any, err error) ([]float64, error) {
 	return val, nil
 }
 
-// StringSlice executes a command whose reply is a `[]string`.
-func StringSlice(v any, err error) ([]string, error) {
-	slice, err := Slice(v, err)
+// toStringSlice executes a command whose reply is a `[]string`.
+func toStringSlice(v any, err error) ([]string, error) {
+	slice, err := toSlice(v, err)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +202,7 @@ func StringSlice(v any, err error) ([]string, error) {
 	val := make([]string, len(slice))
 	for i, r := range slice {
 		var str string
-		str, err = String(r, nil)
+		str, err = toString(r, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -200,12 +211,12 @@ func StringSlice(v any, err error) ([]string, error) {
 	return val, nil
 }
 
-// StringMap executes a command whose reply is a `map[string]string`.
-func StringMap(v any, err error) (map[string]string, error) {
+// toStringMap executes a command whose reply is a `map[string]string`.
+func toStringMap(v any, err error) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	slice, err := StringSlice(v, err)
+	slice, err := toStringSlice(v, err)
 	if err != nil {
 		return nil, err
 	}

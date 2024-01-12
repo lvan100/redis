@@ -2,21 +2,21 @@ package redis
 
 type ClientOption func(*Client)
 
-func CustomStringCmd(fn func(StringCmd) StringCmd) ClientOption {
+func CustomStringOps(fn func(StringOps) StringOps) ClientOption {
 	return func(c *Client) {
-		c.stringCmd = fn(c.stringCmd)
+		c.stringOps = fn(c.stringOps)
 	}
 }
 
 type Client struct {
 	driver    Driver
-	stringCmd StringCmd
+	stringOps StringOps
 }
 
 func NewClient(driver Driver, opts ...ClientOption) (*Client, error) {
 	c := &Client{
 		driver:    driver,
-		stringCmd: &stringCmd{driver},
+		stringOps: &stringOps{driver},
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -24,4 +24,4 @@ func NewClient(driver Driver, opts ...ClientOption) (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) StringCmd() StringCmd { return c.stringCmd }
+func (c *Client) StringOps() StringOps { return c.stringOps }

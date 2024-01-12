@@ -4,24 +4,33 @@ import (
 	"context"
 )
 
-type StringCmdGet struct {
-	StringReplier[*StringCmdGet]
-	ExOpt[*StringCmdGet]
-	Command
+type CmdGet struct {
+	optEx[*CmdGet]
+	optPx[*CmdGet]
+	optExAt[*CmdGet]
+	optPxAt[*CmdGet]
+	optPersist[*CmdGet]
+	CmdStringReplier
 }
 
-type StringCmdSet struct {
-	StringReplier[*StringCmdSet]
-	ExOpt[*StringCmdSet]
-	Command
+type CmdSet struct {
+	optEx[*CmdSet]
+	optPx[*CmdSet]
+	optExAt[*CmdSet]
+	optPxAt[*CmdSet]
+	optKeepTTL[*CmdSet]
+	optNX[*CmdSet]
+	optXX[*CmdSet]
+	optGet[*CmdSet]
+	CmdStringReplier
 }
 
-type StringCmd interface {
+type StringOps interface {
 
 	// Append https://redis.io/commands/append
 	// Command: APPEND key value
 	// Integer reply: the length of the string after the append operation.
-	Append(ctx context.Context, key, value string) (int64, error)
+	Append(ctx context.Context, key, value string) *CmdIntReplier
 
 	// Decr https://redis.io/commands/decr
 	// Command: DECR key
@@ -47,7 +56,7 @@ type StringCmd interface {
 	// GetEx https://redis.io/commands/getex
 	// Command: GETEX key [EX seconds|PX milliseconds|EXAT timestamp|PXAT milliseconds-timestamp|PERSIST]
 	// Bulk string reply: the value of key, or nil when key does not exist.
-	GetEx(ctx context.Context, key string, args ...any) *StringCmdGet
+	GetEx(ctx context.Context, key string) *CmdGet
 
 	// GetRange https://redis.io/commands/getrange
 	// Command: GETRANGE key start end
@@ -99,7 +108,7 @@ type StringCmd interface {
 	// Set https://redis.io/commands/set
 	// Command: SET key value [EX seconds|PX milliseconds|EXAT timestamp|PXAT milliseconds-timestamp|KEEPTTL] [NX|XX] [GET]
 	// Simple string reply: OK if SET was executed correctly.
-	Set(ctx context.Context, key string, value any) *StringCmdSet
+	Set(ctx context.Context, key string, value any) *CmdSet
 
 	// SetEX https://redis.io/commands/setex
 	// Command: SETEX key seconds value
@@ -122,96 +131,115 @@ type StringCmd interface {
 	StrLen(ctx context.Context, key string) (int64, error)
 }
 
-type stringCmd struct {
+var _ StringOps = (*stringOps)(nil)
+
+type stringOps struct {
 	driver Driver
 }
 
-func (c *stringCmd) Append(ctx context.Context, key, value string) (int64, error) {
-	return Int(c.driver.Exec(ctx, "APPEND", []any{key, value}))
-}
-
-func (c *stringCmd) Decr(ctx context.Context, key string) (int64, error) {
-	return Int(c.driver.Exec(ctx, "DECR", []any{key}))
-}
-
-func (c *stringCmd) DecrBy(ctx context.Context, key string, decrement int64) (int64, error) {
-	return Int(c.driver.Exec(ctx, "DECRBY", []any{key, decrement}))
-}
-
-func (c *stringCmd) Get(ctx context.Context, key string) (string, error) {
-	return String(c.driver.Exec(ctx, "GET", []any{key}))
-}
-
-func (c *stringCmd) GetDel(ctx context.Context, key string) (string, error) {
-	return String(c.driver.Exec(ctx, "GETDEL", []any{key}))
-}
-
-func (c *stringCmd) GetEx(ctx context.Context, key string, args ...any) *StringCmdGet {
-	return &StringCmdGet{Command: Command{
-		driver: c.driver,
-		ctx:    ctx,
-		cmd:    "GETEX",
-		args:   append([]any{key}, args...),
+func (c *stringOps) Append(ctx context.Context, key, value string) *CmdIntReplier {
+	return &CmdIntReplier{command: command{
+		d:    c.driver,
+		ctx:  ctx,
+		cmd:  "APPEND",
+		args: []any{key, value},
 	}}
 }
 
-func (c *stringCmd) GetRange(ctx context.Context, key string, start, end int64) (string, error) {
-	return String(c.driver.Exec(ctx, "GETRANGE", []any{key, start, end}))
+func (c *stringOps) Decr(ctx context.Context, key string) (int64, error) {
+	return toInt64(c.driver.Exec(ctx, "DECR", []any{key}))
 }
 
-func (c *stringCmd) GetSet(ctx context.Context, key string, value any) (string, error) {
-	return String(c.driver.Exec(ctx, "GETSET", []any{key, value}))
+func (c *stringOps) DecrBy(ctx context.Context, key string, decrement int64) (int64, error) {
+	return toInt64(c.driver.Exec(ctx, "DECRBY", []any{key, decrement}))
 }
 
-func (c *stringCmd) Incr(ctx context.Context, key string) (int64, error) {
-	return Int(c.driver.Exec(ctx, "INCR", []any{key}))
+func (c *stringOps) Get(ctx context.Context, key string) (string, error) {
+	return toString(c.driver.Exec(ctx, "GET", []any{key}))
 }
 
-func (c *stringCmd) IncrBy(ctx context.Context, key string, value int64) (int64, error) {
-	return Int(c.driver.Exec(ctx, "INCRBY", []any{key, value}))
+func (c *stringOps) GetDel(ctx context.Context, key string) (string, error) {
+	return toString(c.driver.Exec(ctx, "GETDEL", []any{key}))
 }
 
-func (c *stringCmd) IncrByFloat(ctx context.Context, key string, value float64) (float64, error) {
-	return Float(c.driver.Exec(ctx, "INCRBYFLOAT", []any{key, value}))
+func (c *stringOps) GetEx(ctx context.Context, key string) *CmdGet {
+	return &CmdGet{
+		CmdStringReplier: CmdStringReplier{
+			command: command{
+				d:    c.driver,
+				ctx:  ctx,
+				cmd:  "GETEX",
+				args: []any{key},
+			},
+		},
+	}
 }
 
-func (c *stringCmd) MGet(ctx context.Context, keys ...string) ([]any, error) {
-	return Slice(c.driver.Exec(ctx, "MGET", []any{}))
+func (c *stringOps) GetRange(ctx context.Context, key string, start, end int64) (string, error) {
+	return toString(c.driver.Exec(ctx, "GETRANGE", []any{key, start, end}))
 }
 
-func (c *stringCmd) MSet(ctx context.Context, args ...any) (string, error) {
-	return String(c.driver.Exec(ctx, "MSET", args))
+func (c *stringOps) GetSet(ctx context.Context, key string, value any) (string, error) {
+	return toString(c.driver.Exec(ctx, "GETSET", []any{key, value}))
 }
 
-func (c *stringCmd) MSetNX(ctx context.Context, args ...any) (int64, error) {
-	return Int(c.driver.Exec(ctx, "MSETNX", args))
+func (c *stringOps) Incr(ctx context.Context, key string) (int64, error) {
+	return toInt64(c.driver.Exec(ctx, "INCR", []any{key}))
 }
 
-func (c *stringCmd) PSetEX(ctx context.Context, key string, value any, expire int64) (string, error) {
-	return String(c.driver.Exec(ctx, "PSETEX", []any{key, value, expire}))
+func (c *stringOps) IncrBy(ctx context.Context, key string, value int64) (int64, error) {
+	return toInt64(c.driver.Exec(ctx, "INCRBY", []any{key, value}))
 }
 
-func (c *stringCmd) Set(ctx context.Context, key string, value any) *StringCmdSet {
-	return &StringCmdSet{Command: Command{
-		driver: c.driver,
-		ctx:    ctx,
-		cmd:    "SET",
-		args:   []any{key, value},
-	}}
+func (c *stringOps) IncrByFloat(ctx context.Context, key string, value float64) (float64, error) {
+	return toFloat64(c.driver.Exec(ctx, "INCRBYFLOAT", []any{key, value}))
 }
 
-func (c *stringCmd) SetEX(ctx context.Context, key string, value any, expire int64) (string, error) {
-	return String(c.driver.Exec(ctx, "SETEX", []any{key, value, expire}))
+func (c *stringOps) MGet(ctx context.Context, keys ...string) ([]any, error) {
+	args := make([]any, 0, len(keys))
+	for _, key := range keys {
+		args = append(args, key)
+	}
+	return toSlice(c.driver.Exec(ctx, "MGET", args))
 }
 
-func (c *stringCmd) SetNX(ctx context.Context, key string, value any) (int64, error) {
-	return Int(c.driver.Exec(ctx, "SETNX", []any{key, value}))
+func (c *stringOps) MSet(ctx context.Context, args ...any) (string, error) {
+	return toString(c.driver.Exec(ctx, "MSET", args))
 }
 
-func (c *stringCmd) SetRange(ctx context.Context, key string, offset int64, value string) (int64, error) {
-	return Int(c.driver.Exec(ctx, "SETRANGE", []any{key, offset, value}))
+func (c *stringOps) MSetNX(ctx context.Context, args ...any) (int64, error) {
+	return toInt64(c.driver.Exec(ctx, "MSETNX", args))
 }
 
-func (c *stringCmd) StrLen(ctx context.Context, key string) (int64, error) {
-	return Int(c.driver.Exec(ctx, "STRLEN", []any{key}))
+func (c *stringOps) PSetEX(ctx context.Context, key string, value any, expire int64) (string, error) {
+	return toString(c.driver.Exec(ctx, "PSETEX", []any{key, expire, value}))
+}
+
+func (c *stringOps) Set(ctx context.Context, key string, value any) *CmdSet {
+	return &CmdSet{
+		CmdStringReplier: CmdStringReplier{
+			command: command{
+				d:    c.driver,
+				ctx:  ctx,
+				cmd:  "SET",
+				args: []any{key, value},
+			},
+		},
+	}
+}
+
+func (c *stringOps) SetEX(ctx context.Context, key string, value any, expire int64) (string, error) {
+	return toString(c.driver.Exec(ctx, "SETEX", []any{key, expire, value}))
+}
+
+func (c *stringOps) SetNX(ctx context.Context, key string, value any) (int64, error) {
+	return toInt64(c.driver.Exec(ctx, "SETNX", []any{key, value}))
+}
+
+func (c *stringOps) SetRange(ctx context.Context, key string, offset int64, value string) (int64, error) {
+	return toInt64(c.driver.Exec(ctx, "SETRANGE", []any{key, offset, value}))
+}
+
+func (c *stringOps) StrLen(ctx context.Context, key string) (int64, error) {
+	return toInt64(c.driver.Exec(ctx, "STRLEN", []any{key}))
 }
