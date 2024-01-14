@@ -35,6 +35,12 @@ func (r *Int64SliceReplier) Result() ([]int64, error) {
 	return toInt64Slice(r.driver.Exec(r.ctx, r.cmd, r.args))
 }
 
+type Float64SliceReplier struct{ command }
+
+func (r *Float64SliceReplier) Result() ([]float64, error) {
+	return toFloat64Slice(r.driver.Exec(r.ctx, r.cmd, r.args))
+}
+
 type StringSliceReplier struct{ command }
 
 func (r *StringSliceReplier) Result() ([]string, error) {
@@ -45,6 +51,12 @@ type StringMapReplier struct{ command }
 
 func (r *StringMapReplier) Result() (map[string]string, error) {
 	return toStringMap(r.driver.Exec(r.ctx, r.cmd, r.args))
+}
+
+type ZItemSliceReplier struct{ command }
+
+func (r *ZItemSliceReplier) Result() ([]ZItem, error) {
+	return toZItemSlice(r.driver.Exec(r.ctx, r.cmd, r.args))
 }
 
 type Result struct {
@@ -239,31 +251,31 @@ func toStringMap(v any, err error) (map[string]string, error) {
 	return val, nil
 }
 
-//// ZItemSlice executes a command whose reply is a `[]ZItem`.
-//func ZItemSlice(v any, err error) ([]ZItem, error) {
-//	if err != nil {
-//		return nil, err
-//	}
-//	slice, err := StringSlice(v, err)
-//	if err != nil {
-//		return nil, err
-//	}
-//	if len(slice) == 0 {
-//		return nil, nil
-//	}
-//	if len(slice)%2 != 0 {
-//		return nil, fmt.Errorf("redis: unexpected slice length %d", len(slice))
-//	}
-//	val := make([]ZItem, len(slice)/2)
-//	for i := 0; i < len(val); i++ {
-//		idx := i * 2
-//		var score float64
-//		score, err = Float(slice[idx+1], nil)
-//		if err != nil {
-//			return nil, err
-//		}
-//		val[i].Member = slice[idx]
-//		val[i].Score = score
-//	}
-//	return val, nil
-//}
+// toZItemSlice executes a command whose reply is a `[]ZItem`.
+func toZItemSlice(v any, err error) ([]ZItem, error) {
+	if err != nil {
+		return nil, err
+	}
+	slice, err := toStringSlice(v, err)
+	if err != nil {
+		return nil, err
+	}
+	if len(slice) == 0 {
+		return nil, nil
+	}
+	if len(slice)%2 != 0 {
+		return nil, fmt.Errorf("redis: unexpected slice length %d", len(slice))
+	}
+	val := make([]ZItem, len(slice)/2)
+	for i := 0; i < len(val); i++ {
+		idx := i * 2
+		var score float64
+		score, err = toFloat64(slice[idx+1], nil)
+		if err != nil {
+			return nil, err
+		}
+		val[i].Member = slice[idx]
+		val[i].Score = score
+	}
+	return val, nil
+}

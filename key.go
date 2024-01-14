@@ -123,10 +123,6 @@ type KeyOps interface {
 	Type(ctx context.Context, key string) *StringReplier
 }
 
-///////////////////////
-
-var _ KeyOps = (*keyOps)(nil)
-
 type keyOps struct {
 	driver Driver
 }

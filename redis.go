@@ -8,23 +8,61 @@ func CustomStringOps(fn func(StringOps) StringOps) ClientOption {
 	}
 }
 
+func CustomBitmapOps(fn func(ops BitmapOps) BitmapOps) ClientOption {
+	return func(c *Client) {
+		c.bitmapOps = fn(c.bitmapOps)
+	}
+}
+
+func CustomHashOps(fn func(HashOps) HashOps) ClientOption {
+	return func(c *Client) {
+		c.hashOps = fn(c.hashOps)
+	}
+}
+
+func CustomKeyOps(fn func(KeyOps) KeyOps) ClientOption {
+	return func(c *Client) {
+		c.keyOps = fn(c.keyOps)
+	}
+}
+
+func CustomListOps(fn func(ListOps) ListOps) ClientOption {
+	return func(c *Client) {
+		c.listOps = fn(c.listOps)
+	}
+}
+
+func CustomSetOps(fn func(SetOps) SetOps) ClientOption {
+	return func(c *Client) {
+		c.setOps = fn(c.setOps)
+	}
+}
+
+func CustomSortedSetOps(fn func(SortedSetOps) SortedSetOps) ClientOption {
+	return func(c *Client) {
+		c.sortedSetOps = fn(c.sortedSetOps)
+	}
+}
+
 type Client struct {
-	driver    Driver
-	stringOps StringOps
-	bitmapOps BitmapOps
-	hashOps   HashOps
-	keyOps    KeyOps
-	listOps   ListOps
+	stringOps    StringOps
+	bitmapOps    BitmapOps
+	hashOps      HashOps
+	keyOps       KeyOps
+	listOps      ListOps
+	setOps       SetOps
+	sortedSetOps SortedSetOps
 }
 
 func NewClient(driver Driver, opts ...ClientOption) (*Client, error) {
 	c := &Client{
-		driver:    driver,
-		stringOps: &stringOps{driver},
-		bitmapOps: &bitmapOps{driver},
-		hashOps:   &hashOps{driver},
-		keyOps:    &keyOps{driver},
-		listOps:   &listOps{driver},
+		stringOps:    &stringOps{driver},
+		bitmapOps:    &bitmapOps{driver},
+		hashOps:      &hashOps{driver},
+		keyOps:       &keyOps{driver},
+		listOps:      &listOps{driver},
+		setOps:       &setOps{driver},
+		sortedSetOps: &sortedSetOps{driver},
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -41,3 +79,7 @@ func (c *Client) HashOps() HashOps { return c.hashOps }
 func (c *Client) KeyOps() KeyOps { return c.keyOps }
 
 func (c *Client) ListOps() ListOps { return c.listOps }
+
+func (c *Client) SetOps() SetOps { return c.setOps }
+
+func (c *Client) SortedSetOps() SortedSetOps { return c.sortedSetOps }

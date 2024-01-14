@@ -131,8 +131,6 @@ type StringOps interface {
 	StrLen(ctx context.Context, key string) *Int64Replier
 }
 
-var _ StringOps = (*stringOps)(nil)
-
 type stringOps struct {
 	driver Driver
 }

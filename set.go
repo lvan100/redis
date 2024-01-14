@@ -97,10 +97,6 @@ type SetOps interface {
 	SUnionStore(ctx context.Context, destination string, keys ...string) *Int64Replier
 }
 
-/////////////////////////////
-
-var _ SetOps = (*setOps)(nil)
-
 type setOps struct {
 	driver Driver
 }

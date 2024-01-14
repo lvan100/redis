@@ -77,10 +77,6 @@ type HashOps interface {
 	HVals(ctx context.Context, key string) *StringSliceReplier
 }
 
-//////////////////////
-
-var _ HashOps = (*hashOps)(nil)
-
 type hashOps struct {
 	driver Driver
 }

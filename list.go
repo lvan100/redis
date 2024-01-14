@@ -129,10 +129,6 @@ type ListOps interface {
 	RPushX(ctx context.Context, key string, values ...any) *Int64Replier
 }
 
-//////////////////////////////
-
-var _ ListOps = (*listOps)(nil)
-
 type listOps struct {
 	driver Driver
 }

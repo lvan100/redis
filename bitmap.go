@@ -62,10 +62,6 @@ type BitmapOps interface {
 	SetBit(ctx context.Context, key string, offset int64, value int) *Int64Replier
 }
 
-/////////////////////////
-
-var _ BitmapOps = (*bitmapOps)(nil)
-
 type bitmapOps struct {
 	driver Driver
 }
