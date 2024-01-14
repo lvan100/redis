@@ -126,6 +126,24 @@ func (o *optGet[T]) Get() T {
 	return t
 }
 
+// optStart ...
+type optStart[T cmdOption] struct{}
+
+func (o *optStart[T]) Start(v int) T {
+	t := *(*T)(unsafe.Pointer(&o))
+	t.option(v)
+	return t
+}
+
+// optEnd ...
+type optEnd[T cmdOption] struct{}
+
+func (o *optEnd[T]) End(v int) T {
+	t := *(*T)(unsafe.Pointer(&o))
+	t.option(v)
+	return t
+}
+
 type command struct {
 	driver Driver
 	ctx    context.Context
