@@ -5,30 +5,16 @@ import (
 	"strconv"
 )
 
-type replier struct{ command }
+type Int64Replier struct{ command }
 
-func (r *replier) result() (any, error) {
-	return r.driver.Exec(r.ctx, r.cmd, r.args)
+func (r *Int64Replier) Result() (int64, error) {
+	return toInt64(r.driver.Exec(r.ctx, r.cmd, r.args))
 }
 
-type CmdIntReplier struct{ replier }
+type StringReplier struct{ command }
 
-func NewCmdIntReplier(c command) *CmdIntReplier {
-	return &CmdIntReplier{replier{c}}
-}
-
-func (r *CmdIntReplier) Result() (int64, error) {
-	return toInt64(r.result())
-}
-
-type CmdStringReplier struct{ replier }
-
-func NewCmdStringReplier(c command) *CmdStringReplier {
-	return &CmdStringReplier{replier{c}}
-}
-
-func (r *CmdStringReplier) Result() (string, error) {
-	return toString(r.result())
+func (r *StringReplier) Result() (string, error) {
+	return toString(r.driver.Exec(r.ctx, r.cmd, r.args))
 }
 
 type Result struct {

@@ -10,7 +10,7 @@ type CmdGet struct {
 	optExAt[*CmdGet]
 	optPxAt[*CmdGet]
 	optPersist[*CmdGet]
-	CmdStringReplier
+	StringReplier
 }
 
 type CmdSet struct {
@@ -18,11 +18,11 @@ type CmdSet struct {
 	optPx[*CmdSet]
 	optExAt[*CmdSet]
 	optPxAt[*CmdSet]
-	optKeepTTL[*CmdSet]
 	optNX[*CmdSet]
 	optXX[*CmdSet]
+	optKeepTTL[*CmdSet]
 	optGet[*CmdSet]
-	CmdStringReplier
+	StringReplier
 }
 
 type StringOps interface {
@@ -30,28 +30,28 @@ type StringOps interface {
 	// Append https://redis.io/commands/append
 	// Command: APPEND key value
 	// Integer reply: the length of the string after the append operation.
-	Append(ctx context.Context, key, value string) *CmdIntReplier
+	Append(ctx context.Context, key, value string) *Int64Replier
 
 	// Decr https://redis.io/commands/decr
 	// Command: DECR key
 	// Integer reply: the value of key after the decrement
-	Decr(ctx context.Context, key string) (int64, error)
+	Decr(ctx context.Context, key string) *Int64Replier
 
 	// DecrBy https://redis.io/commands/decrby
 	// Command: DECRBY key decrement
 	// Integer reply: the value of key after the decrement.
-	DecrBy(ctx context.Context, key string, decrement int64) (int64, error)
+	DecrBy(ctx context.Context, key string, decrement int64) *Int64Replier
 
 	// Get https://redis.io/commands/get
 	// Command: GET key
 	// Bulk string reply: the value of key, or nil when key does not exist.
-	Get(ctx context.Context, key string) (string, error)
+	Get(ctx context.Context, key string) *StringReplier
 
 	// GetDel https://redis.io/commands/getdel
 	// Command: GETDEL key
 	// Bulk string reply: the value of key, nil when key does not exist,
 	// or an error if the key's value type isn't a string.
-	GetDel(ctx context.Context, key string) (string, error)
+	GetDel(ctx context.Context, key string) *StringReplier
 
 	// GetEx https://redis.io/commands/getex
 	// Command: GETEX key [EX seconds|PX milliseconds|EXAT timestamp|PXAT milliseconds-timestamp|PERSIST]
@@ -61,22 +61,22 @@ type StringOps interface {
 	// GetRange https://redis.io/commands/getrange
 	// Command: GETRANGE key start end
 	// Bulk string reply
-	GetRange(ctx context.Context, key string, start, end int64) (string, error)
+	GetRange(ctx context.Context, key string, start, end int64) *StringReplier
 
 	// GetSet https://redis.io/commands/getset
 	// Command: GETSET key value
 	// Bulk string reply: the old value stored at key, or nil when key did not exist.
-	GetSet(ctx context.Context, key string, value any) (string, error)
+	GetSet(ctx context.Context, key string, value any) *StringReplier
 
 	// Incr https://redis.io/commands/incr
 	// Command: INCR key
 	// Integer reply: the value of key after the increment
-	Incr(ctx context.Context, key string) (int64, error)
+	Incr(ctx context.Context, key string) *Int64Replier
 
 	// IncrBy https://redis.io/commands/incrby
 	// Command: INCRBY key increment
 	// Integer reply: the value of key after the increment.
-	IncrBy(ctx context.Context, key string, value int64) (int64, error)
+	IncrBy(ctx context.Context, key string, value int64) *Int64Replier
 
 	// IncrByFloat https://redis.io/commands/incrbyfloat
 	// Command: INCRBYFLOAT key increment
@@ -91,19 +91,19 @@ type StringOps interface {
 	// MSet https://redis.io/commands/mset
 	// Command: MSET key value [key value ...]
 	// Simple string reply: always OK since MSET can't fail.
-	MSet(ctx context.Context, args ...any) (string, error)
+	MSet(ctx context.Context, args ...any) *StringReplier
 
 	// MSetNX https://redis.io/commands/msetnx
 	// Command: MSETNX key value [key value ...]
 	// MSETNX is atomic, so all given keys are set at once
 	// Integer reply: 1 if the all the keys were set, 0 if no
 	// key was set (at least one key already existed).
-	MSetNX(ctx context.Context, args ...any) (int64, error)
+	MSetNX(ctx context.Context, args ...any) *Int64Replier
 
 	// PSetEX https://redis.io/commands/psetex
 	// Command: PSETEX key milliseconds value
 	// Simple string reply
-	PSetEX(ctx context.Context, key string, value any, expire int64) (string, error)
+	PSetEX(ctx context.Context, key string, value any, expire int64) *StringReplier
 
 	// Set https://redis.io/commands/set
 	// Command: SET key value [EX seconds|PX milliseconds|EXAT timestamp|PXAT milliseconds-timestamp|KEEPTTL] [NX|XX] [GET]
@@ -113,22 +113,22 @@ type StringOps interface {
 	// SetEX https://redis.io/commands/setex
 	// Command: SETEX key seconds value
 	// Simple string reply
-	SetEX(ctx context.Context, key string, value any, expire int64) (string, error)
+	SetEX(ctx context.Context, key string, value any, expire int64) *StringReplier
 
 	// SetNX https://redis.io/commands/setnx
 	// Command: SETNX key value
 	// Integer reply: 1 if the key was set, 0 if the key was not set.
-	SetNX(ctx context.Context, key string, value any) (int64, error)
+	SetNX(ctx context.Context, key string, value any) *Int64Replier
 
 	// SetRange https://redis.io/commands/setrange
 	// Command: SETRANGE key offset value
 	// Integer reply: the length of the string after it was modified by the command.
-	SetRange(ctx context.Context, key string, offset int64, value string) (int64, error)
+	SetRange(ctx context.Context, key string, offset int64, value string) *Int64Replier
 
 	// StrLen https://redis.io/commands/strlen
 	// Command: STRLEN key
 	// Integer reply: the length of the string at key, or 0 when key does not exist.
-	StrLen(ctx context.Context, key string) (int64, error)
+	StrLen(ctx context.Context, key string) *Int64Replier
 }
 
 var _ StringOps = (*stringOps)(nil)
@@ -137,60 +137,116 @@ type stringOps struct {
 	driver Driver
 }
 
-func (c *stringOps) Append(ctx context.Context, key, value string) *CmdIntReplier {
-	return NewCmdIntReplier(command{
-		driver: c.driver,
-		ctx:    ctx,
-		cmd:    "APPEND",
-		args:   []any{key, value},
-	})
+func (c *stringOps) Append(ctx context.Context, key, value string) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "APPEND",
+			args:   []any{key, value},
+		},
+	}
 }
 
-func (c *stringOps) Decr(ctx context.Context, key string) (int64, error) {
-	return toInt64(c.driver.Exec(ctx, "DECR", []any{key}))
+func (c *stringOps) Decr(ctx context.Context, key string) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "DECR",
+			args:   []any{key},
+		},
+	}
 }
 
-func (c *stringOps) DecrBy(ctx context.Context, key string, decrement int64) (int64, error) {
-	return toInt64(c.driver.Exec(ctx, "DECRBY", []any{key, decrement}))
+func (c *stringOps) DecrBy(ctx context.Context, key string, decrement int64) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "DECRBY",
+			args:   []any{key, decrement},
+		},
+	}
 }
 
-func (c *stringOps) Get(ctx context.Context, key string) (string, error) {
-	return toString(c.driver.Exec(ctx, "GET", []any{key}))
+func (c *stringOps) Get(ctx context.Context, key string) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "GET",
+			args:   []any{key},
+		},
+	}
 }
 
-func (c *stringOps) GetDel(ctx context.Context, key string) (string, error) {
-	return toString(c.driver.Exec(ctx, "GETDEL", []any{key}))
+func (c *stringOps) GetDel(ctx context.Context, key string) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "GETDEL",
+			args:   []any{key},
+		},
+	}
 }
 
 func (c *stringOps) GetEx(ctx context.Context, key string) *CmdGet {
 	return &CmdGet{
-		CmdStringReplier: CmdStringReplier{
-			replier: replier{
-				command: command{
-					driver: c.driver,
-					ctx:    ctx,
-					cmd:    "GETEX",
-					args:   []any{key},
-				},
+		StringReplier: StringReplier{
+			command: command{
+				driver: c.driver,
+				ctx:    ctx,
+				cmd:    "GETEX",
+				args:   []any{key},
 			},
 		},
 	}
 }
 
-func (c *stringOps) GetRange(ctx context.Context, key string, start, end int64) (string, error) {
-	return toString(c.driver.Exec(ctx, "GETRANGE", []any{key, start, end}))
+func (c *stringOps) GetRange(ctx context.Context, key string, start, end int64) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "GETRANGE",
+			args:   []any{key, start, end},
+		},
+	}
 }
 
-func (c *stringOps) GetSet(ctx context.Context, key string, value any) (string, error) {
-	return toString(c.driver.Exec(ctx, "GETSET", []any{key, value}))
+func (c *stringOps) GetSet(ctx context.Context, key string, value any) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "GETSET",
+			args:   []any{key, value},
+		},
+	}
 }
 
-func (c *stringOps) Incr(ctx context.Context, key string) (int64, error) {
-	return toInt64(c.driver.Exec(ctx, "INCR", []any{key}))
+func (c *stringOps) Incr(ctx context.Context, key string) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "INCR",
+			args:   []any{key},
+		},
+	}
 }
 
-func (c *stringOps) IncrBy(ctx context.Context, key string, value int64) (int64, error) {
-	return toInt64(c.driver.Exec(ctx, "INCRBY", []any{key, value}))
+func (c *stringOps) IncrBy(ctx context.Context, key string, value int64) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "INCRBY",
+			args:   []any{key, value},
+		},
+	}
 }
 
 func (c *stringOps) IncrByFloat(ctx context.Context, key string, value float64) (float64, error) {
@@ -205,45 +261,92 @@ func (c *stringOps) MGet(ctx context.Context, keys ...string) ([]any, error) {
 	return toSlice(c.driver.Exec(ctx, "MGET", args))
 }
 
-func (c *stringOps) MSet(ctx context.Context, args ...any) (string, error) {
-	return toString(c.driver.Exec(ctx, "MSET", args))
+func (c *stringOps) MSet(ctx context.Context, args ...any) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "MSET",
+			args:   args,
+		},
+	}
 }
 
-func (c *stringOps) MSetNX(ctx context.Context, args ...any) (int64, error) {
-	return toInt64(c.driver.Exec(ctx, "MSETNX", args))
+func (c *stringOps) MSetNX(ctx context.Context, args ...any) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "MSETNX",
+			args:   args,
+		},
+	}
 }
 
-func (c *stringOps) PSetEX(ctx context.Context, key string, value any, expire int64) (string, error) {
-	return toString(c.driver.Exec(ctx, "PSETEX", []any{key, expire, value}))
+func (c *stringOps) PSetEX(ctx context.Context, key string, value any, expire int64) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "PSETEX",
+			args:   []any{key, expire, value},
+		},
+	}
 }
 
 func (c *stringOps) Set(ctx context.Context, key string, value any) *CmdSet {
 	return &CmdSet{
-		CmdStringReplier: CmdStringReplier{
-			replier: replier{
-				command: command{
-					driver: c.driver,
-					ctx:    ctx,
-					cmd:    "SET",
-					args:   []any{key, value},
-				},
+		StringReplier: StringReplier{
+			command: command{
+				driver: c.driver,
+				ctx:    ctx,
+				cmd:    "SET",
+				args:   []any{key, value},
 			},
 		},
 	}
 }
 
-func (c *stringOps) SetEX(ctx context.Context, key string, value any, expire int64) (string, error) {
-	return toString(c.driver.Exec(ctx, "SETEX", []any{key, expire, value}))
+func (c *stringOps) SetEX(ctx context.Context, key string, value any, expire int64) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SETEX",
+			args:   []any{key, expire, value},
+		},
+	}
 }
 
-func (c *stringOps) SetNX(ctx context.Context, key string, value any) (int64, error) {
-	return toInt64(c.driver.Exec(ctx, "SETNX", []any{key, value}))
+func (c *stringOps) SetNX(ctx context.Context, key string, value any) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SETNX",
+			args:   []any{key, value},
+		},
+	}
 }
 
-func (c *stringOps) SetRange(ctx context.Context, key string, offset int64, value string) (int64, error) {
-	return toInt64(c.driver.Exec(ctx, "SETRANGE", []any{key, offset, value}))
+func (c *stringOps) SetRange(ctx context.Context, key string, offset int64, value string) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SETRANGE",
+			args:   []any{key, offset, value},
+		},
+	}
 }
 
-func (c *stringOps) StrLen(ctx context.Context, key string) (int64, error) {
-	return toInt64(c.driver.Exec(ctx, "STRLEN", []any{key}))
+func (c *stringOps) StrLen(ctx context.Context, key string) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "STRLEN",
+			args:   []any{key},
+		},
+	}
 }

@@ -7,34 +7,34 @@ type ListOps interface {
 	// LIndex https://redis.io/commands/lindex
 	// Command: LINDEX key index
 	// Bulk string reply: the requested element, or nil when index is out of range.
-	LIndex(ctx context.Context, key string, index int64) (string, error)
+	LIndex(ctx context.Context, key string, index int64) *StringReplier
 
 	// LInsertBefore https://redis.io/commands/linsert
 	// Command: LINSERT key BEFORE|AFTER pivot element
 	// Integer reply: the length of the list after the
 	// insert operation, or -1 when the value pivot was not found.
-	LInsertBefore(ctx context.Context, key string, pivot, value any) (int64, error)
+	LInsertBefore(ctx context.Context, key string, pivot, value any) *Int64Replier
 
 	// LInsertAfter https://redis.io/commands/linsert
 	// Command: LINSERT key BEFORE|AFTER pivot element
 	// Integer reply: the length of the list after the
 	// insert operation, or -1 when the value pivot was not found.
-	LInsertAfter(ctx context.Context, key string, pivot, value any) (int64, error)
+	LInsertAfter(ctx context.Context, key string, pivot, value any) *Int64Replier
 
 	// LLen https://redis.io/commands/llen
 	// Command: LLEN key
 	// Integer reply: the length of the list at key.
-	LLen(ctx context.Context, key string) (int64, error)
+	LLen(ctx context.Context, key string) *Int64Replier
 
 	// LMove https://redis.io/commands/lmove
 	// Command: LMOVE source destination LEFT|RIGHT LEFT|RIGHT
 	// Bulk string reply: the element being popped and pushed.
-	LMove(ctx context.Context, source, destination, srcPos, destPos string) (string, error)
+	LMove(ctx context.Context, source, destination, srcPos, destPos string) *StringReplier
 
 	// LPop https://redis.io/commands/lpop
 	// Command: LPOP key [count]
 	// Bulk string reply: the value of the first element, or nil when key does not exist.
-	LPop(ctx context.Context, key string) (string, error)
+	LPop(ctx context.Context, key string) *StringReplier
 
 	// LPopN https://redis.io/commands/lpop
 	// Command: LPOP key [count]
@@ -46,7 +46,7 @@ type ListOps interface {
 	// The command returns the integer representing the matching element,
 	// or nil if there is no match. However, if the COUNT option is given
 	// the command returns an array (empty if there are no matches).
-	LPos(ctx context.Context, key string, value any, args ...any) (int64, error)
+	LPos(ctx context.Context, key string, value any, args ...any) *Int64Replier
 
 	// LPosN https://redis.io/commands/lpos
 	// Command: LPOS key element [RANK rank] [COUNT num-matches] [MAXLEN len]
@@ -58,12 +58,12 @@ type ListOps interface {
 	// LPush https://redis.io/commands/lpush
 	// Command: LPUSH key element [element ...]
 	// Integer reply: the length of the list after the push operations.
-	LPush(ctx context.Context, key string, values ...any) (int64, error)
+	LPush(ctx context.Context, key string, values ...any) *Int64Replier
 
 	// LPushX https://redis.io/commands/lpushx
 	// Command: LPUSHX key element [element ...]
 	// Integer reply: the length of the list after the push operation.
-	LPushX(ctx context.Context, key string, values ...any) (int64, error)
+	LPushX(ctx context.Context, key string, values ...any) *Int64Replier
 
 	// LRange https://redis.io/commands/lrange
 	// Command: LRANGE key start stop
@@ -73,22 +73,22 @@ type ListOps interface {
 	// LRem https://redis.io/commands/lrem
 	// Command: LREM key count element
 	// Integer reply: the number of removed elements.
-	LRem(ctx context.Context, key string, count int64, value any) (int64, error)
+	LRem(ctx context.Context, key string, count int64, value any) *Int64Replier
 
 	// LSet https://redis.io/commands/lset
 	// Command: LSET key index element
 	// Simple string reply
-	LSet(ctx context.Context, key string, index int64, value any) (string, error)
+	LSet(ctx context.Context, key string, index int64, value any) *StringReplier
 
 	// LTrim https://redis.io/commands/ltrim
 	// Command: LTRIM key start stop
 	// Simple string reply
-	LTrim(ctx context.Context, key string, start, stop int64) (string, error)
+	LTrim(ctx context.Context, key string, start, stop int64) *StringReplier
 
 	// RPop https://redis.io/commands/rpop
 	// Command: RPOP key [count]
 	// Bulk string reply: the value of the last element, or nil when key does not exist.
-	RPop(ctx context.Context, key string) (string, error)
+	RPop(ctx context.Context, key string) *StringReplier
 
 	// RPopN https://redis.io/commands/rpop
 	// Command: RPOP key [count]
@@ -98,17 +98,17 @@ type ListOps interface {
 	// RPopLPush https://redis.io/commands/rpoplpush
 	// Command: RPOPLPUSH source destination
 	// Bulk string reply: the element being popped and pushed.
-	RPopLPush(ctx context.Context, source, destination string) (string, error)
+	RPopLPush(ctx context.Context, source, destination string) *StringReplier
 
 	// RPush https://redis.io/commands/rpush
 	// Command: RPUSH key element [element ...]
 	// Integer reply: the length of the list after the push operation.
-	RPush(ctx context.Context, key string, values ...any) (int64, error)
+	RPush(ctx context.Context, key string, values ...any) *Int64Replier
 
 	// RPushX https://redis.io/commands/rpushx
 	// Command: RPUSHX key element [element ...]
 	// Integer reply: the length of the list after the push operation.
-	RPushX(ctx context.Context, key string, values ...any) (int64, error)
+	RPushX(ctx context.Context, key string, values ...any) *Int64Replier
 }
 
 //////////////////////////////
@@ -119,180 +119,214 @@ type listOps struct {
 	driver Driver
 }
 
-// LIndex https://redis.io/commands/lindex
-// Command: LINDEX key index
-// Bulk string reply: the requested element, or nil when index is out of range.
-func (c *listOps) LIndex(ctx context.Context, key string, index int64) (string, error) {
-	args := []any{key, index}
-	return toString(c.driver.Exec(ctx, "LINDEX", args))
+func (c *listOps) LIndex(ctx context.Context, key string, index int64) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LINDEX",
+			args:   []any{key, index},
+		},
+	}
 }
 
-// LInsertBefore https://redis.io/commands/linsert
-// Command: LINSERT key BEFORE|AFTER pivot element
-// Integer reply: the length of the list after the
-// insert operation, or -1 when the value pivot was not found.
-func (c *listOps) LInsertBefore(ctx context.Context, key string, pivot, value any) (int64, error) {
-	args := []any{key, "BEFORE", pivot, value}
-	return toInt64(c.driver.Exec(ctx, "LINSERT", args))
+func (c *listOps) LInsertBefore(ctx context.Context, key string, pivot, value any) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LINSERT",
+			args:   []any{key, "BEFORE", pivot, value},
+		},
+	}
 }
 
-// LInsertAfter https://redis.io/commands/linsert
-// Command: LINSERT key BEFORE|AFTER pivot element
-// Integer reply: the length of the list after the
-// insert operation, or -1 when the value pivot was not found.
-func (c *listOps) LInsertAfter(ctx context.Context, key string, pivot, value any) (int64, error) {
-	args := []any{key, "AFTER", pivot, value}
-	return toInt64(c.driver.Exec(ctx, "LINSERT", args))
+func (c *listOps) LInsertAfter(ctx context.Context, key string, pivot, value any) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LINSERT",
+			args:   []any{key, "AFTER", pivot, value},
+		},
+	}
 }
 
-// LLen https://redis.io/commands/llen
-// Command: LLEN key
-// Integer reply: the length of the list at key.
-func (c *listOps) LLen(ctx context.Context, key string) (int64, error) {
-	args := []any{key}
-	return toInt64(c.driver.Exec(ctx, "LLEN", args))
+func (c *listOps) LLen(ctx context.Context, key string) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LLEN",
+			args:   []any{key},
+		},
+	}
 }
 
-// LMove https://redis.io/commands/lmove
-// Command: LMOVE source destination LEFT|RIGHT LEFT|RIGHT
-// Bulk string reply: the element being popped and pushed.
-func (c *listOps) LMove(ctx context.Context, source, destination, srcPos, destPos string) (string, error) {
-	args := []any{source, destination, srcPos, destPos}
-	return toString(c.driver.Exec(ctx, "LMOVE", args))
+func (c *listOps) LMove(ctx context.Context, source, destination, srcPos, destPos string) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LMOVE",
+			args:   []any{source, destination, srcPos, destPos},
+		},
+	}
 }
 
-// LPop https://redis.io/commands/lpop
-// Command: LPOP key [count]
-// Bulk string reply: the value of the first element, or nil when key does not exist.
-func (c *listOps) LPop(ctx context.Context, key string) (string, error) {
-	args := []any{key}
-	return toString(c.driver.Exec(ctx, "LPOP", args))
+func (c *listOps) LPop(ctx context.Context, key string) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LPOP",
+			args:   []any{key},
+		},
+	}
 }
 
-// LPopN https://redis.io/commands/lpop
-// Command: LPOP key [count]
-// Array reply: list of popped elements, or nil when key does not exist.
 func (c *listOps) LPopN(ctx context.Context, key string, count int) ([]string, error) {
 	args := []any{key, count}
 	return toStringSlice(c.driver.Exec(ctx, "LPOP", args))
 }
 
-// LPos https://redis.io/commands/lpos
-// Command: LPOS key element [RANK rank] [COUNT num-matches] [MAXLEN len]
-// The command returns the integer representing the matching element,
-// or nil if there is no match. However, if the COUNT option is given
-// the command returns an array (empty if there are no matches).
-func (c *listOps) LPos(ctx context.Context, key string, value any, args ...any) (int64, error) {
-	args = append([]any{key, value}, args)
-	return toInt64(c.driver.Exec(ctx, "LPOS", args))
+func (c *listOps) LPos(ctx context.Context, key string, value any, args ...any) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LPOP",
+			args:   append([]any{key, value}, args),
+		},
+	}
 }
 
-// LPosN https://redis.io/commands/lpos
-// Command: LPOS key element [RANK rank] [COUNT num-matches] [MAXLEN len]
-// The command returns the integer representing the matching element,
-// or nil if there is no match. However, if the COUNT option is given
-// the command returns an array (empty if there are no matches).
 func (c *listOps) LPosN(ctx context.Context, key string, value any, count int64, args ...any) ([]int64, error) {
 	args = append([]any{key, value, "COUNT", count}, args)
 	return toInt64Slice(c.driver.Exec(ctx, "LPOS", args))
 }
 
-// LPush https://redis.io/commands/lpush
-// Command: LPUSH key element [element ...]
-// Integer reply: the length of the list after the push operations.
-func (c *listOps) LPush(ctx context.Context, key string, values ...any) (int64, error) {
+func (c *listOps) LPush(ctx context.Context, key string, values ...any) *Int64Replier {
 	args := []any{key}
 	for _, value := range values {
 		args = append(args, value)
 	}
-	return toInt64(c.driver.Exec(ctx, "LPUSH", args))
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LPUSH",
+			args:   args,
+		},
+	}
 }
 
-// LPushX https://redis.io/commands/lpushx
-// Command: LPUSHX key element [element ...]
-// Integer reply: the length of the list after the push operation.
-func (c *listOps) LPushX(ctx context.Context, key string, values ...any) (int64, error) {
+func (c *listOps) LPushX(ctx context.Context, key string, values ...any) *Int64Replier {
 	args := []any{key}
 	for _, value := range values {
 		args = append(args, value)
 	}
-	return toInt64(c.driver.Exec(ctx, "LPUSHX", args))
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LPUSHX",
+			args:   args,
+		},
+	}
 }
 
-// LRange https://redis.io/commands/lrange
-// Command: LRANGE key start stop
-// Array reply: list of elements in the specified range.
 func (c *listOps) LRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
 	args := []any{key, start, stop}
 	return toStringSlice(c.driver.Exec(ctx, "LRANGE", args))
 }
 
-// LRem https://redis.io/commands/lrem
-// Command: LREM key count element
-// Integer reply: the number of removed elements.
-func (c *listOps) LRem(ctx context.Context, key string, count int64, value any) (int64, error) {
-	args := []any{key, count, value}
-	return toInt64(c.driver.Exec(ctx, "LREM", args))
+func (c *listOps) LRem(ctx context.Context, key string, count int64, value any) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LREM",
+			args:   []any{key, count, value},
+		},
+	}
 }
 
-// LSet https://redis.io/commands/lset
-// Command: LSET key index element
-// Simple string reply
-func (c *listOps) LSet(ctx context.Context, key string, index int64, value any) (string, error) {
-	args := []any{key, index, value}
-	return toString(c.driver.Exec(ctx, "LSET", args))
+func (c *listOps) LSet(ctx context.Context, key string, index int64, value any) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LSET",
+			args:   []any{key, index, value},
+		},
+	}
 }
 
-// LTrim https://redis.io/commands/ltrim
-// Command: LTRIM key start stop
-// Simple string reply
-func (c *listOps) LTrim(ctx context.Context, key string, start, stop int64) (string, error) {
-	args := []any{key, start, stop}
-	return toString(c.driver.Exec(ctx, "LTRIM", args))
+func (c *listOps) LTrim(ctx context.Context, key string, start, stop int64) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LTRIM",
+			args:   []any{key, start, stop},
+		},
+	}
 }
 
-// RPop https://redis.io/commands/rpop
-// Command: RPOP key [count]
-// Bulk string reply: the value of the last element, or nil when key does not exist.
-func (c *listOps) RPop(ctx context.Context, key string) (string, error) {
-	args := []any{key}
-	return toString(c.driver.Exec(ctx, "RPOP", args))
+func (c *listOps) RPop(ctx context.Context, key string) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "RPOP",
+			args:   []any{key},
+		},
+	}
 }
 
-// RPopN https://redis.io/commands/rpop
-// Command: RPOP key [count]
-// Array reply: list of popped elements, or nil when key does not exist.
 func (c *listOps) RPopN(ctx context.Context, key string, count int) ([]string, error) {
 	args := []any{key, count}
 	return toStringSlice(c.driver.Exec(ctx, "RPOP", args))
 }
 
-// RPopLPush https://redis.io/commands/rpoplpush
-// Command: RPOPLPUSH source destination
-// Bulk string reply: the element being popped and pushed.
-func (c *listOps) RPopLPush(ctx context.Context, source, destination string) (string, error) {
-	args := []any{source, destination}
-	return toString(c.driver.Exec(ctx, "RPOPLPUSH", args))
+func (c *listOps) RPopLPush(ctx context.Context, source, destination string) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "RPOPLPUSH",
+			args:   []any{source, destination},
+		},
+	}
 }
 
-// RPush https://redis.io/commands/rpush
-// Command: RPUSH key element [element ...]
-// Integer reply: the length of the list after the push operation.
-func (c *listOps) RPush(ctx context.Context, key string, values ...any) (int64, error) {
+func (c *listOps) RPush(ctx context.Context, key string, values ...any) *Int64Replier {
 	args := []any{key}
 	for _, value := range values {
 		args = append(args, value)
 	}
-	return toInt64(c.driver.Exec(ctx, "RPUSH", args))
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "RPUSH",
+			args:   args,
+		},
+	}
 }
 
-// RPushX https://redis.io/commands/rpushx
-// Command: RPUSHX key element [element ...]
-// Integer reply: the length of the list after the push operation.
-func (c *listOps) RPushX(ctx context.Context, key string, values ...any) (int64, error) {
+func (c *listOps) RPushX(ctx context.Context, key string, values ...any) *Int64Replier {
 	args := []any{key}
 	for _, value := range values {
 		args = append(args, value)
 	}
-	return toInt64(c.driver.Exec(ctx, "RPUSHX", args))
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "RPUSHX",
+			args:   args,
+		},
+	}
 }
