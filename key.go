@@ -2,6 +2,38 @@ package redis
 
 import "context"
 
+type CmdExpire struct {
+	optNX[*CmdExpire]
+	optXX[*CmdExpire]
+	optGT[*CmdExpire]
+	optLT[*CmdExpire]
+	Int64Replier
+}
+
+type CmdExpireAt struct {
+	optNX[*CmdExpireAt]
+	optXX[*CmdExpireAt]
+	optGT[*CmdExpireAt]
+	optLT[*CmdExpireAt]
+	Int64Replier
+}
+
+type CmdPExpire struct {
+	optNX[*CmdPExpire]
+	optXX[*CmdPExpire]
+	optGT[*CmdPExpire]
+	optLT[*CmdPExpire]
+	Int64Replier
+}
+
+type CmdPExpireAt struct {
+	optNX[*CmdPExpireAt]
+	optXX[*CmdPExpireAt]
+	optGT[*CmdPExpireAt]
+	optLT[*CmdPExpireAt]
+	Int64Replier
+}
+
 type KeyOps interface {
 
 	// Del https://redis.io/commands/del
@@ -25,12 +57,12 @@ type KeyOps interface {
 	// Expire https://redis.io/commands/expire
 	// Command: EXPIRE key seconds [NX|XX|GT|LT]
 	// Integer reply: 1 if the timeout was set, 0 if the timeout was not set.
-	Expire(ctx context.Context, key string, expire int64, args ...any) *Int64Replier
+	Expire(ctx context.Context, key string, expire int64) *CmdExpire
 
 	// ExpireAt https://redis.io/commands/expireat
 	// Command: EXPIREAT key timestamp [NX|XX|GT|LT]
 	// Integer reply: 1 if the timeout was set, 0 if the timeout was not set.
-	ExpireAt(ctx context.Context, key string, expireAt int64, args ...any) *Int64Replier
+	ExpireAt(ctx context.Context, key string, expireAt int64) *CmdExpireAt
 
 	// Keys https://redis.io/commands/keys
 	// Command: KEYS pattern
@@ -46,12 +78,12 @@ type KeyOps interface {
 	// PExpire https://redis.io/commands/pexpire
 	// Command: PEXPIRE key milliseconds [NX|XX|GT|LT]
 	// Integer reply: 1 if the timeout was set, 0 if the timeout was not set.
-	PExpire(ctx context.Context, key string, expire int64, args ...any) *Int64Replier
+	PExpire(ctx context.Context, key string, expire int64) *CmdPExpire
 
 	// PExpireAt https://redis.io/commands/pexpireat
 	// Command: PEXPIREAT key milliseconds-timestamp [NX|XX|GT|LT]
 	// Integer reply: 1 if the timeout was set, 0 if the timeout was not set.
-	PExpireAt(ctx context.Context, key string, expireAt int64, args ...any) *Int64Replier
+	PExpireAt(ctx context.Context, key string, expireAt int64) *CmdPExpireAt
 
 	// PTTL https://redis.io/commands/pttl
 	// Command: PTTL key
@@ -140,24 +172,28 @@ func (c *keyOps) Exists(ctx context.Context, keys ...string) *Int64Replier {
 	}
 }
 
-func (c *keyOps) Expire(ctx context.Context, key string, expire int64, args ...any) *Int64Replier {
-	return &Int64Replier{
-		command: command{
-			driver: c.driver,
-			ctx:    ctx,
-			cmd:    "EXPIRE",
-			args:   append([]any{key, expire}, args...),
+func (c *keyOps) Expire(ctx context.Context, key string, expire int64) *CmdExpire {
+	return &CmdExpire{
+		Int64Replier: Int64Replier{
+			command: command{
+				driver: c.driver,
+				ctx:    ctx,
+				cmd:    "EXPIRE",
+				args:   []any{key, expire},
+			},
 		},
 	}
 }
 
-func (c *keyOps) ExpireAt(ctx context.Context, key string, expireAt int64, args ...any) *Int64Replier {
-	return &Int64Replier{
-		command: command{
-			driver: c.driver,
-			ctx:    ctx,
-			cmd:    "EXPIREAT",
-			args:   append([]any{key, expireAt}, args...),
+func (c *keyOps) ExpireAt(ctx context.Context, key string, expireAt int64) *CmdExpireAt {
+	return &CmdExpireAt{
+		Int64Replier: Int64Replier{
+			command: command{
+				driver: c.driver,
+				ctx:    ctx,
+				cmd:    "EXPIREAT",
+				args:   []any{key, expireAt},
+			},
 		},
 	}
 }
@@ -184,24 +220,28 @@ func (c *keyOps) Persist(ctx context.Context, key string) *Int64Replier {
 	}
 }
 
-func (c *keyOps) PExpire(ctx context.Context, key string, expire int64, args ...any) *Int64Replier {
-	return &Int64Replier{
-		command: command{
-			driver: c.driver,
-			ctx:    ctx,
-			cmd:    "PEXPIRE",
-			args:   append([]any{key, expire}, args),
+func (c *keyOps) PExpire(ctx context.Context, key string, expire int64) *CmdPExpire {
+	return &CmdPExpire{
+		Int64Replier: Int64Replier{
+			command: command{
+				driver: c.driver,
+				ctx:    ctx,
+				cmd:    "PEXPIRE",
+				args:   []any{key, expire},
+			},
 		},
 	}
 }
 
-func (c *keyOps) PExpireAt(ctx context.Context, key string, expireAt int64, args ...any) *Int64Replier {
-	return &Int64Replier{
-		command: command{
-			driver: c.driver,
-			ctx:    ctx,
-			cmd:    "PEXPIREAT",
-			args:   append([]any{key, expireAt}, args),
+func (c *keyOps) PExpireAt(ctx context.Context, key string, expireAt int64) *CmdPExpireAt {
+	return &CmdPExpireAt{
+		Int64Replier: Int64Replier{
+			command: command{
+				driver: c.driver,
+				ctx:    ctx,
+				cmd:    "PEXPIREAT",
+				args:   []any{key, expireAt},
+			},
 		},
 	}
 }

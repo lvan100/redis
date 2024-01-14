@@ -117,6 +117,24 @@ func (o *optXX[T]) Exists() T {
 	return t
 }
 
+// optGT ...
+type optGT[T cmdOption] struct{}
+
+func (o *optGT[T]) Gt() T {
+	t := *(*T)(unsafe.Pointer(&o))
+	t.option("GT")
+	return t
+}
+
+// optLT ...
+type optLT[T cmdOption] struct{}
+
+func (o *optLT[T]) Lt() T {
+	t := *(*T)(unsafe.Pointer(&o))
+	t.option("LT")
+	return t
+}
+
 // optGet ...
 type optGet[T cmdOption] struct{}
 
@@ -141,6 +159,51 @@ type optEnd[T cmdOption] struct{}
 func (o *optEnd[T]) End(v int) T {
 	t := *(*T)(unsafe.Pointer(&o))
 	t.option(v)
+	return t
+}
+
+// optLeft ...
+type optLeft[T cmdOption] struct{}
+
+func (o *optLeft[T]) Left() T {
+	t := *(*T)(unsafe.Pointer(&o))
+	t.option("LEFT")
+	return t
+}
+
+// optRight ...
+type optRight[T cmdOption] struct{}
+
+func (o *optRight[T]) Right() T {
+	t := *(*T)(unsafe.Pointer(&o))
+	t.option("RIGHT")
+	return t
+}
+
+// optRank ...
+type optRank[T cmdOption] struct{}
+
+func (o *optRank[T]) Rank(v int) T {
+	t := *(*T)(unsafe.Pointer(&o))
+	t.option("RANK", v)
+	return t
+}
+
+// optCount ...
+type optCount[T cmdOption] struct{}
+
+func (o *optCount[T]) Count(v int) T {
+	t := *(*T)(unsafe.Pointer(&o))
+	t.option("COUNT", v)
+	return t
+}
+
+// optMaxLen ...
+type optMaxLen[T cmdOption] struct{}
+
+func (o *optMaxLen[T]) MaxLen(v int) T {
+	t := *(*T)(unsafe.Pointer(&o))
+	t.option("MAXLEN", v)
 	return t
 }
 

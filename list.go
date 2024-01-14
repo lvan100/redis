@@ -2,6 +2,24 @@ package redis
 
 import "context"
 
+type CmdLMove struct {
+	optLeft[*CmdLMove]
+	optRight[*CmdLMove]
+	StringReplier
+}
+
+type CmdLPos struct {
+	optRank[*CmdLPos]
+	Int64Replier
+}
+
+type CmdLPosN struct {
+	optRank[*CmdLPos]
+	optCount[*CmdLPos]
+	optMaxLen[*CmdLPos]
+	Int64SliceReplier
+}
+
 type ListOps interface {
 
 	// LIndex https://redis.io/commands/lindex
@@ -29,7 +47,7 @@ type ListOps interface {
 	// LMove https://redis.io/commands/lmove
 	// Command: LMOVE source destination LEFT|RIGHT LEFT|RIGHT
 	// Bulk string reply: the element being popped and pushed.
-	LMove(ctx context.Context, source, destination, srcPos, destPos string) *StringReplier
+	LMove(ctx context.Context, source, destination string) *CmdLMove
 
 	// LPop https://redis.io/commands/lpop
 	// Command: LPOP key [count]
@@ -46,14 +64,14 @@ type ListOps interface {
 	// The command returns the integer representing the matching element,
 	// or nil if there is no match. However, if the COUNT option is given
 	// the command returns an array (empty if there are no matches).
-	LPos(ctx context.Context, key string, value any, args ...any) *Int64Replier
+	LPos(ctx context.Context, key string, value any) *CmdLPos
 
 	// LPosN https://redis.io/commands/lpos
 	// Command: LPOS key element [RANK rank] [COUNT num-matches] [MAXLEN len]
 	// The command returns the integer representing the matching element,
 	// or nil if there is no match. However, if the COUNT option is given
 	// the command returns an array (empty if there are no matches).
-	LPosN(ctx context.Context, key string, value any, count int64, args ...any) *Int64SliceReplier
+	LPosN(ctx context.Context, key string, value any, count int64) *CmdLPosN
 
 	// LPush https://redis.io/commands/lpush
 	// Command: LPUSH key element [element ...]
@@ -163,13 +181,15 @@ func (c *listOps) LLen(ctx context.Context, key string) *Int64Replier {
 	}
 }
 
-func (c *listOps) LMove(ctx context.Context, source, destination, srcPos, destPos string) *StringReplier {
-	return &StringReplier{
-		command: command{
-			driver: c.driver,
-			ctx:    ctx,
-			cmd:    "LMOVE",
-			args:   []any{source, destination, srcPos, destPos},
+func (c *listOps) LMove(ctx context.Context, source, destination string) *CmdLMove {
+	return &CmdLMove{
+		StringReplier: StringReplier{
+			command: command{
+				driver: c.driver,
+				ctx:    ctx,
+				cmd:    "LMOVE",
+				args:   []any{source, destination},
+			},
 		},
 	}
 }
@@ -196,24 +216,28 @@ func (c *listOps) LPopN(ctx context.Context, key string, count int) *StringSlice
 	}
 }
 
-func (c *listOps) LPos(ctx context.Context, key string, value any, args ...any) *Int64Replier {
-	return &Int64Replier{
-		command: command{
-			driver: c.driver,
-			ctx:    ctx,
-			cmd:    "LPOP",
-			args:   append([]any{key, value}, args),
+func (c *listOps) LPos(ctx context.Context, key string, value any) *CmdLPos {
+	return &CmdLPos{
+		Int64Replier: Int64Replier{
+			command: command{
+				driver: c.driver,
+				ctx:    ctx,
+				cmd:    "LPOP",
+				args:   []any{key, value},
+			},
 		},
 	}
 }
 
-func (c *listOps) LPosN(ctx context.Context, key string, value any, count int64, args ...any) *Int64SliceReplier {
-	return &Int64SliceReplier{
-		command: command{
-			driver: c.driver,
-			ctx:    ctx,
-			cmd:    "LPOS",
-			args:   append([]any{key, value, "COUNT", count}, args),
+func (c *listOps) LPosN(ctx context.Context, key string, value any, count int64) *CmdLPosN {
+	return &CmdLPosN{
+		Int64SliceReplier: Int64SliceReplier{
+			command: command{
+				driver: c.driver,
+				ctx:    ctx,
+				cmd:    "LPOS",
+				args:   []any{key, value, "COUNT", count},
+			},
 		},
 	}
 }
