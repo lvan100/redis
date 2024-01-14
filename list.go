@@ -39,7 +39,7 @@ type ListOps interface {
 	// LPopN https://redis.io/commands/lpop
 	// Command: LPOP key [count]
 	// Array reply: list of popped elements, or nil when key does not exist.
-	LPopN(ctx context.Context, key string, count int) ([]string, error)
+	LPopN(ctx context.Context, key string, count int) *StringSliceReplier
 
 	// LPos https://redis.io/commands/lpos
 	// Command: LPOS key element [RANK rank] [COUNT num-matches] [MAXLEN len]
@@ -53,7 +53,7 @@ type ListOps interface {
 	// The command returns the integer representing the matching element,
 	// or nil if there is no match. However, if the COUNT option is given
 	// the command returns an array (empty if there are no matches).
-	LPosN(ctx context.Context, key string, value any, count int64, args ...any) ([]int64, error)
+	LPosN(ctx context.Context, key string, value any, count int64, args ...any) *Int64SliceReplier
 
 	// LPush https://redis.io/commands/lpush
 	// Command: LPUSH key element [element ...]
@@ -68,7 +68,7 @@ type ListOps interface {
 	// LRange https://redis.io/commands/lrange
 	// Command: LRANGE key start stop
 	// Array reply: list of elements in the specified range.
-	LRange(ctx context.Context, key string, start, stop int64) ([]string, error)
+	LRange(ctx context.Context, key string, start, stop int64) *StringSliceReplier
 
 	// LRem https://redis.io/commands/lrem
 	// Command: LREM key count element
@@ -93,7 +93,7 @@ type ListOps interface {
 	// RPopN https://redis.io/commands/rpop
 	// Command: RPOP key [count]
 	// Array reply: list of popped elements, or nil when key does not exist.
-	RPopN(ctx context.Context, key string, count int) ([]string, error)
+	RPopN(ctx context.Context, key string, count int) *StringSliceReplier
 
 	// RPopLPush https://redis.io/commands/rpoplpush
 	// Command: RPOPLPUSH source destination
@@ -185,9 +185,15 @@ func (c *listOps) LPop(ctx context.Context, key string) *StringReplier {
 	}
 }
 
-func (c *listOps) LPopN(ctx context.Context, key string, count int) ([]string, error) {
-	args := []any{key, count}
-	return toStringSlice(c.driver.Exec(ctx, "LPOP", args))
+func (c *listOps) LPopN(ctx context.Context, key string, count int) *StringSliceReplier {
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LPOP",
+			args:   []any{key, count},
+		},
+	}
 }
 
 func (c *listOps) LPos(ctx context.Context, key string, value any, args ...any) *Int64Replier {
@@ -201,9 +207,15 @@ func (c *listOps) LPos(ctx context.Context, key string, value any, args ...any) 
 	}
 }
 
-func (c *listOps) LPosN(ctx context.Context, key string, value any, count int64, args ...any) ([]int64, error) {
-	args = append([]any{key, value, "COUNT", count}, args)
-	return toInt64Slice(c.driver.Exec(ctx, "LPOS", args))
+func (c *listOps) LPosN(ctx context.Context, key string, value any, count int64, args ...any) *Int64SliceReplier {
+	return &Int64SliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LPOS",
+			args:   append([]any{key, value, "COUNT", count}, args),
+		},
+	}
 }
 
 func (c *listOps) LPush(ctx context.Context, key string, values ...any) *Int64Replier {
@@ -236,9 +248,15 @@ func (c *listOps) LPushX(ctx context.Context, key string, values ...any) *Int64R
 	}
 }
 
-func (c *listOps) LRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
-	args := []any{key, start, stop}
-	return toStringSlice(c.driver.Exec(ctx, "LRANGE", args))
+func (c *listOps) LRange(ctx context.Context, key string, start, stop int64) *StringSliceReplier {
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "LRANGE",
+			args:   []any{key, start, stop},
+		},
+	}
 }
 
 func (c *listOps) LRem(ctx context.Context, key string, count int64, value any) *Int64Replier {
@@ -285,9 +303,15 @@ func (c *listOps) RPop(ctx context.Context, key string) *StringReplier {
 	}
 }
 
-func (c *listOps) RPopN(ctx context.Context, key string, count int) ([]string, error) {
-	args := []any{key, count}
-	return toStringSlice(c.driver.Exec(ctx, "RPOP", args))
+func (c *listOps) RPopN(ctx context.Context, key string, count int) *StringSliceReplier {
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "RPOP",
+			args:   []any{key, count},
+		},
+	}
 }
 
 func (c *listOps) RPopLPush(ctx context.Context, source, destination string) *StringReplier {

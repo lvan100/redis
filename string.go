@@ -81,12 +81,12 @@ type StringOps interface {
 	// IncrByFloat https://redis.io/commands/incrbyfloat
 	// Command: INCRBYFLOAT key increment
 	// Bulk string reply: the value of key after the increment.
-	IncrByFloat(ctx context.Context, key string, value float64) (float64, error)
+	IncrByFloat(ctx context.Context, key string, value float64) *Float64Replier
 
 	// MGet https://redis.io/commands/mget
 	// Command: MGET key [key ...]
 	// Array reply: list of values at the specified keys.
-	MGet(ctx context.Context, keys ...string) ([]any, error)
+	MGet(ctx context.Context, keys ...string) *SliceReplier
 
 	// MSet https://redis.io/commands/mset
 	// Command: MSET key value [key value ...]
@@ -249,16 +249,30 @@ func (c *stringOps) IncrBy(ctx context.Context, key string, value int64) *Int64R
 	}
 }
 
-func (c *stringOps) IncrByFloat(ctx context.Context, key string, value float64) (float64, error) {
-	return toFloat64(c.driver.Exec(ctx, "INCRBYFLOAT", []any{key, value}))
+func (c *stringOps) IncrByFloat(ctx context.Context, key string, value float64) *Float64Replier {
+	return &Float64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "INCRBYFLOAT",
+			args:   []any{key, value},
+		},
+	}
 }
 
-func (c *stringOps) MGet(ctx context.Context, keys ...string) ([]any, error) {
+func (c *stringOps) MGet(ctx context.Context, keys ...string) *SliceReplier {
 	args := make([]any, 0, len(keys))
 	for _, key := range keys {
 		args = append(args, key)
 	}
-	return toSlice(c.driver.Exec(ctx, "MGET", args))
+	return &SliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "MGET",
+			args:   args,
+		},
+	}
 }
 
 func (c *stringOps) MSet(ctx context.Context, args ...any) *StringReplier {

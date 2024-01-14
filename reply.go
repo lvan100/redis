@@ -11,10 +11,40 @@ func (r *Int64Replier) Result() (int64, error) {
 	return toInt64(r.driver.Exec(r.ctx, r.cmd, r.args))
 }
 
+type Float64Replier struct{ command }
+
+func (r *Float64Replier) Result() (float64, error) {
+	return toFloat64(r.driver.Exec(r.ctx, r.cmd, r.args))
+}
+
 type StringReplier struct{ command }
 
 func (r *StringReplier) Result() (string, error) {
 	return toString(r.driver.Exec(r.ctx, r.cmd, r.args))
+}
+
+type SliceReplier struct{ command }
+
+func (r *SliceReplier) Result() ([]any, error) {
+	return toSlice(r.driver.Exec(r.ctx, r.cmd, r.args))
+}
+
+type Int64SliceReplier struct{ command }
+
+func (r *Int64SliceReplier) Result() ([]int64, error) {
+	return toInt64Slice(r.driver.Exec(r.ctx, r.cmd, r.args))
+}
+
+type StringSliceReplier struct{ command }
+
+func (r *StringSliceReplier) Result() ([]string, error) {
+	return toStringSlice(r.driver.Exec(r.ctx, r.cmd, r.args))
+}
+
+type StringMapReplier struct{ command }
+
+func (r *StringMapReplier) Result() (map[string]string, error) {
+	return toStringMap(r.driver.Exec(r.ctx, r.cmd, r.args))
 }
 
 type Result struct {

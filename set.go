@@ -19,7 +19,7 @@ type SetOps interface {
 	// SDiff https://redis.io/commands/sdiff
 	// Command: SDIFF key [key ...]
 	// Array reply: list with members of the resulting set.
-	SDiff(ctx context.Context, keys ...string) ([]string, error)
+	SDiff(ctx context.Context, keys ...string) *StringSliceReplier
 
 	// SDiffStore https://redis.io/commands/sdiffstore
 	// Command: SDIFFSTORE destination key [key ...]
@@ -29,7 +29,7 @@ type SetOps interface {
 	// SInter https://redis.io/commands/sinter
 	// Command: SINTER key [key ...]
 	// Array reply: list with members of the resulting set.
-	SInter(ctx context.Context, keys ...string) ([]string, error)
+	SInter(ctx context.Context, keys ...string) *StringSliceReplier
 
 	// SInterStore https://redis.io/commands/sinterstore
 	// Command: SINTERSTORE destination key [key ...]
@@ -45,13 +45,13 @@ type SetOps interface {
 	// SMembers https://redis.io/commands/smembers
 	// Command: SMEMBERS key
 	// Array reply: all elements of the set.
-	SMembers(ctx context.Context, key string) ([]string, error)
+	SMembers(ctx context.Context, key string) *StringSliceReplier
 
 	// SMIsMember https://redis.io/commands/smismember
 	// Command: SMISMEMBER key member [member ...]
 	// Array reply: list representing the membership of the given elements,
 	// in the same order as they are requested.
-	SMIsMember(ctx context.Context, key string, members ...any) ([]int64, error)
+	SMIsMember(ctx context.Context, key string, members ...any) *Int64SliceReplier
 
 	// SMove https://redis.io/commands/smove
 	// Command: SMOVE source destination member
@@ -67,7 +67,7 @@ type SetOps interface {
 	// SPopN https://redis.io/commands/spop
 	// Command: SPOP key [count]
 	// Array reply: the removed members, or an empty array when key does not exist.
-	SPopN(ctx context.Context, key string, count int64) ([]string, error)
+	SPopN(ctx context.Context, key string, count int64) *StringSliceReplier
 
 	// SRandMember https://redis.io/commands/srandmember
 	// Command: SRANDMEMBER key [count]
@@ -78,7 +78,7 @@ type SetOps interface {
 	// SRandMemberN https://redis.io/commands/srandmember
 	// Command: SRANDMEMBER key [count]
 	// Returns an array of elements, or an empty array when key does not exist.
-	SRandMemberN(ctx context.Context, key string, count int64) ([]string, error)
+	SRandMemberN(ctx context.Context, key string, count int64) *StringSliceReplier
 
 	// SRem https://redis.io/commands/srem
 	// Command: SREM key member [member ...]
@@ -89,7 +89,7 @@ type SetOps interface {
 	// SUnion https://redis.io/commands/sunion
 	// Command: SUNION key [key ...]
 	// Array reply: list with members of the resulting set.
-	SUnion(ctx context.Context, keys ...string) ([]string, error)
+	SUnion(ctx context.Context, keys ...string) *StringSliceReplier
 
 	// SUnionStore https://redis.io/commands/sunionstore
 	// Command: SUNIONSTORE destination key [key ...]
@@ -97,120 +97,229 @@ type SetOps interface {
 	SUnionStore(ctx context.Context, destination string, keys ...string) *Int64Replier
 }
 
-///////////////////////////////
-//
-//var _ SetOps = (*setOps)(nil)
-//
-//type setOps struct {
-//	driver Driver
-//}
-//
-//func (c *setOps) SAdd(ctx context.Context, key string, members ...any) *Int64Replier {
-//	args := []any{"SADD", key}
-//	args = append(args, members...)
-//	return toInt64(c.driver.Exec(ctx, args...)
-//}
-//
-//func (c *setOps) SCard(ctx context.Context, key string) *Int64Replier {
-//	args := []any{"SCARD", key}
-//	return toInt64(c.driver.Exec(ctx, args...)
-//}
-//
-//func (c *setOps) SDiff(ctx context.Context, keys ...string) ([]string, error) {
-//	args := []any{"SDIFF"}
-//	for _, key := range keys {
-//		args = append(args, key)
-//	}
-//	return toString(c.driver.Exec(Slice(ctx, args...)
-//}
-//
-//func (c *setOps) SDiffStore(ctx context.Context, destination string, keys ...string) *Int64Replier {
-//	args := []any{"SDIFFSTORE", destination}
-//	for _, key := range keys {
-//		args = append(args, key)
-//	}
-//	return toInt64(c.driver.Exec(ctx, args...)
-//}
-//
-//func (c *setOps) SInter(ctx context.Context, keys ...string) ([]string, error) {
-//	args := []any{"SINTER"}
-//	for _, key := range keys {
-//		args = append(args, key)
-//	}
-//	return toString(c.driver.Exec(Slice(ctx, args...)
-//}
-//
-//func (c *setOps) SInterStore(ctx context.Context, destination string, keys ...string) *Int64Replier {
-//	args := []any{"SINTERSTORE", destination}
-//	for _, key := range keys {
-//		args = append(args, key)
-//	}
-//	return toInt64(c.driver.Exec(ctx, args...)
-//}
-//
-//func (c *setOps) SIsMember(ctx context.Context, key string, member any) *Int64Replier {
-//	args := []any{"SISMEMBER", key, member}
-//	return toInt64(c.driver.Exec(ctx, args...)
-//}
-//
-//func (c *setOps) SMembers(ctx context.Context, key string) ([]string, error) {
-//	args := []any{"SMEMBERS", key}
-//	return toString(c.driver.Exec(Slice(ctx, args...)
-//}
-//
-//func (c *setOps) SMIsMember(ctx context.Context, key string, members ...any) ([]int64, error) {
-//	args := []any{"SMISMEMBER", key}
-//	for _, member := range members {
-//		args = append(args, member)
-//	}
-//	return c.IntSlice(ctx, args...)
-//}
-//
-//func (c *setOps) SMove(ctx context.Context, source, destination string, member any) *Int64Replier {
-//	args := []any{"SMOVE", source, destination, member}
-//	return toInt64(c.driver.Exec(ctx, args...)
-//}
-//
-//func (c *setOps) SPop(ctx context.Context, key string) *StringReplier {
-//	args := []any{"SPOP", key}
-//	return toString(c.driver.Exec((ctx, args...)
-//}
-//
-//func (c *setOps) SPopN(ctx context.Context, key string, count int64) ([]string, error) {
-//	args := []any{"SPOP", key, count}
-//	return toString(c.driver.Exec(Slice(ctx, args...)
-//}
-//
-//func (c *setOps) SRandMember(ctx context.Context, key string) *StringReplier {
-//	args := []any{"SRANDMEMBER", key}
-//	return toString(c.driver.Exec((ctx, args...)
-//}
-//
-//func (c *setOps) SRandMemberN(ctx context.Context, key string, count int64) ([]string, error) {
-//	args := []any{"SRANDMEMBER", key, count}
-//	return toString(c.driver.Exec(Slice(ctx, args...)
-//}
-//
-//func (c *setOps) SRem(ctx context.Context, key string, members ...any) *Int64Replier {
-//	args := []any{"SREM", key}
-//	for _, member := range members {
-//		args = append(args, member)
-//	}
-//	return toInt64(c.driver.Exec(ctx, args...)
-//}
-//
-//func (c *setOps) SUnion(ctx context.Context, keys ...string) ([]string, error) {
-//	args := []any{"SUNION"}
-//	for _, key := range keys {
-//		args = append(args, key)
-//	}
-//	return toString(c.driver.Exec(Slice(ctx, args...)
-//}
-//
-//func (c *setOps) SUnionStore(ctx context.Context, destination string, keys ...string) *Int64Replier {
-//	args := []any{"SUNIONSTORE", destination}
-//	for _, key := range keys {
-//		args = append(args, key)
-//	}
-//	return toInt64(c.driver.Exec(ctx, args...)
-//}
+/////////////////////////////
+
+var _ SetOps = (*setOps)(nil)
+
+type setOps struct {
+	driver Driver
+}
+
+func (c *setOps) SAdd(ctx context.Context, key string, members ...any) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SADD",
+			args:   append([]any{key}, members...),
+		},
+	}
+}
+
+func (c *setOps) SCard(ctx context.Context, key string) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SCARD",
+			args:   []any{key},
+		},
+	}
+}
+
+func (c *setOps) SDiff(ctx context.Context, keys ...string) *StringSliceReplier {
+	var args []any
+	for _, key := range keys {
+		args = append(args, key)
+	}
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SDIFF",
+			args:   args,
+		},
+	}
+}
+
+func (c *setOps) SDiffStore(ctx context.Context, destination string, keys ...string) *Int64Replier {
+	args := []any{destination}
+	for _, key := range keys {
+		args = append(args, key)
+	}
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SDIFFSTORE",
+			args:   args,
+		},
+	}
+}
+
+func (c *setOps) SInter(ctx context.Context, keys ...string) *StringSliceReplier {
+	var args []any
+	for _, key := range keys {
+		args = append(args, key)
+	}
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SINTER",
+			args:   args,
+		},
+	}
+}
+
+func (c *setOps) SInterStore(ctx context.Context, destination string, keys ...string) *Int64Replier {
+	args := []any{destination}
+	for _, key := range keys {
+		args = append(args, key)
+	}
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SINTERSTORE",
+			args:   args,
+		},
+	}
+}
+
+func (c *setOps) SIsMember(ctx context.Context, key string, member any) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SISMEMBER",
+			args:   []any{key, member},
+		},
+	}
+}
+
+func (c *setOps) SMembers(ctx context.Context, key string) *StringSliceReplier {
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SMEMBERS",
+			args:   []any{key},
+		},
+	}
+}
+
+func (c *setOps) SMIsMember(ctx context.Context, key string, members ...any) *Int64SliceReplier {
+	args := []any{key}
+	for _, member := range members {
+		args = append(args, member)
+	}
+	return &Int64SliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SMISMEMBER",
+			args:   args,
+		},
+	}
+}
+
+func (c *setOps) SMove(ctx context.Context, source, destination string, member any) *Int64Replier {
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SMOVE",
+			args:   []any{source, destination, member},
+		},
+	}
+}
+
+func (c *setOps) SPop(ctx context.Context, key string) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SPOP",
+			args:   []any{key},
+		},
+	}
+}
+
+func (c *setOps) SPopN(ctx context.Context, key string, count int64) *StringSliceReplier {
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SPOP",
+			args:   []any{key, count},
+		},
+	}
+}
+
+func (c *setOps) SRandMember(ctx context.Context, key string) *StringReplier {
+	return &StringReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SRANDMEMBER",
+			args:   []any{key},
+		},
+	}
+}
+
+func (c *setOps) SRandMemberN(ctx context.Context, key string, count int64) *StringSliceReplier {
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SRANDMEMBER",
+			args:   []any{key, count},
+		},
+	}
+}
+
+func (c *setOps) SRem(ctx context.Context, key string, members ...any) *Int64Replier {
+	args := []any{key}
+	for _, member := range members {
+		args = append(args, member)
+	}
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SREM",
+			args:   args,
+		},
+	}
+}
+
+func (c *setOps) SUnion(ctx context.Context, keys ...string) *StringSliceReplier {
+	var args []any
+	for _, key := range keys {
+		args = append(args, key)
+	}
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SUNION",
+			args:   args,
+		},
+	}
+}
+
+func (c *setOps) SUnionStore(ctx context.Context, destination string, keys ...string) *Int64Replier {
+	args := []any{destination}
+	for _, key := range keys {
+		args = append(args, key)
+	}
+	return &Int64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "SUNIONSTORE",
+			args:   args,
+		},
+	}
+}

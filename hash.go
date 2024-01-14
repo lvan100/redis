@@ -26,7 +26,7 @@ type HashOps interface {
 	// Command: HGETALL key
 	// Array reply: list of fields and their values stored
 	// in the hash, or an empty list when key does not exist.
-	HGetAll(ctx context.Context, key string) (map[string]string, error)
+	HGetAll(ctx context.Context, key string) *StringMapReplier
 
 	// HIncrBy https://redis.io/commands/hincrby
 	// Command: HINCRBY key field increment
@@ -36,12 +36,12 @@ type HashOps interface {
 	// HIncrByFloat https://redis.io/commands/hincrbyfloat
 	// Command: HINCRBYFLOAT key field increment
 	// Bulk string reply: the value of field after the increment.
-	HIncrByFloat(ctx context.Context, key, field string, incr float64) (float64, error)
+	HIncrByFloat(ctx context.Context, key, field string, incr float64) *Float64Replier
 
 	// HKeys https://redis.io/commands/hkeys
 	// Command: HKEYS key
 	// Array reply: list of fields in the hash, or an empty list when key does not exist.
-	HKeys(ctx context.Context, key string) ([]string, error)
+	HKeys(ctx context.Context, key string) *StringSliceReplier
 
 	// HLen https://redis.io/commands/hlen
 	// Command: HLEN key
@@ -52,7 +52,7 @@ type HashOps interface {
 	// Command: HMGET key field [field ...]
 	// Array reply: list of values associated with the
 	// given fields, in the same order as they are requested.
-	HMGet(ctx context.Context, key string, fields ...string) ([]any, error)
+	HMGet(ctx context.Context, key string, fields ...string) *SliceReplier
 
 	// HSet https://redis.io/commands/hset
 	// Command: HSET key field value [field value ...]
@@ -74,7 +74,7 @@ type HashOps interface {
 	// HVals https://redis.io/commands/hvals
 	// Command: HVALS key
 	// Array reply: list of values in the hash, or an empty list when key does not exist.
-	HVals(ctx context.Context, key string) ([]string, error)
+	HVals(ctx context.Context, key string) *StringSliceReplier
 }
 
 //////////////////////
@@ -122,9 +122,15 @@ func (c *hashOps) HGet(ctx context.Context, key string, field string) *StringRep
 	}
 }
 
-func (c *hashOps) HGetAll(ctx context.Context, key string) (map[string]string, error) {
-	args := []any{key}
-	return toStringMap(c.driver.Exec(ctx, "HGETALL", args))
+func (c *hashOps) HGetAll(ctx context.Context, key string) *StringMapReplier {
+	return &StringMapReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "HGETALL",
+			args:   []any{key},
+		},
+	}
 }
 
 func (c *hashOps) HIncrBy(ctx context.Context, key, field string, incr int64) *Int64Replier {
@@ -138,14 +144,26 @@ func (c *hashOps) HIncrBy(ctx context.Context, key, field string, incr int64) *I
 	}
 }
 
-func (c *hashOps) HIncrByFloat(ctx context.Context, key, field string, incr float64) (float64, error) {
-	args := []any{key, field, incr}
-	return toFloat64(c.driver.Exec(ctx, "HINCRBYFLOAT", args))
+func (c *hashOps) HIncrByFloat(ctx context.Context, key, field string, incr float64) *Float64Replier {
+	return &Float64Replier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "HINCRBYFLOAT",
+			args:   []any{key, field, incr},
+		},
+	}
 }
 
-func (c *hashOps) HKeys(ctx context.Context, key string) ([]string, error) {
-	args := []any{key}
-	return toStringSlice(c.driver.Exec(ctx, "HKEYS", args))
+func (c *hashOps) HKeys(ctx context.Context, key string) *StringSliceReplier {
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "HKEYS",
+			args:   []any{key},
+		},
+	}
 }
 
 func (c *hashOps) HLen(ctx context.Context, key string) *Int64Replier {
@@ -159,12 +177,19 @@ func (c *hashOps) HLen(ctx context.Context, key string) *Int64Replier {
 	}
 }
 
-func (c *hashOps) HMGet(ctx context.Context, key string, fields ...string) ([]any, error) {
+func (c *hashOps) HMGet(ctx context.Context, key string, fields ...string) *SliceReplier {
 	args := []any{key}
 	for _, field := range fields {
 		args = append(args, field)
 	}
-	return toSlice(c.driver.Exec(ctx, "HMGET", args))
+	return &SliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "HMGET",
+			args:   args,
+		},
+	}
 }
 
 func (c *hashOps) HSet(ctx context.Context, key string, args ...any) *Int64Replier {
@@ -200,7 +225,13 @@ func (c *hashOps) HStrLen(ctx context.Context, key, field string) *Int64Replier 
 	}
 }
 
-func (c *hashOps) HVals(ctx context.Context, key string) ([]string, error) {
-	args := []any{key}
-	return toStringSlice(c.driver.Exec(ctx, "HVALS", args))
+func (c *hashOps) HVals(ctx context.Context, key string) *StringSliceReplier {
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "HVALS",
+			args:   []any{key},
+		},
+	}
 }

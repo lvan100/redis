@@ -35,7 +35,7 @@ type KeyOps interface {
 	// Keys https://redis.io/commands/keys
 	// Command: KEYS pattern
 	// Array reply: list of keys matching pattern.
-	Keys(ctx context.Context, pattern string) ([]string, error)
+	Keys(ctx context.Context, pattern string) *StringSliceReplier
 
 	// Persist https://redis.io/commands/persist
 	// Command: PERSIST key
@@ -162,9 +162,15 @@ func (c *keyOps) ExpireAt(ctx context.Context, key string, expireAt int64, args 
 	}
 }
 
-func (c *keyOps) Keys(ctx context.Context, pattern string) ([]string, error) {
-	args := []any{pattern}
-	return toStringSlice(c.driver.Exec(ctx, "KEYS", args))
+func (c *keyOps) Keys(ctx context.Context, pattern string) *StringSliceReplier {
+	return &StringSliceReplier{
+		command: command{
+			driver: c.driver,
+			ctx:    ctx,
+			cmd:    "KEYS",
+			args:   []any{pattern},
+		},
+	}
 }
 
 func (c *keyOps) Persist(ctx context.Context, key string) *Int64Replier {
